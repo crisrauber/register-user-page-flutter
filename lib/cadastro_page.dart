@@ -33,6 +33,13 @@ class _CadastroPageState extends State<CadastroPage> {
     nomeController.dispose();
     emailController.dispose();
     cpfController.dispose();
+    cepController.dispose();
+    ruaController.dispose();
+    numeroController.dispose();
+    bairroController.dispose();
+    cidadeController.dispose();
+    ufController.dispose();
+    paisController.dispose();
     super.dispose();
   }
 
@@ -162,7 +169,12 @@ class _CadastroPageState extends State<CadastroPage> {
                         child: Container(
                           padding: EdgeInsets.all(10),
                           child: RaisedButton(
-                            child: Text('Buscar Cep'),
+                            child: Row(
+                              children: <Widget>[
+                                Icon(Icons.search),
+                                Text('Buscar Cep'),
+                              ],
+                            ),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
