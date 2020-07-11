@@ -4,20 +4,21 @@ class Usuario {
   String nome;
   String email;
   String cpf;
+  Endereco endereco;
 
   String dados(String enderecoDados) {
     return '''
-  Nome:
-  ${this.nome}
+Nome:
+${this.nome}
 
-  Email:
-  ${this.email}
+Email:
+${this.email}
 
-  CPF:
-  ${this.cpf}
+CPF:
+${this.cpf}
 
-  Endereço:
-  $enderecoDados
+Endereço:
+$enderecoDados
   ''';
   }
 }

@@ -1,7 +1,11 @@
 import 'package:cadastro_usuario_growdev/entidades/endereco.dart';
+import 'package:dio/dio.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:cnpj_cpf_helper/cnpj_cpf_helper.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'package:cnpj_cpf_formatter/cnpj_cpf_formatter.dart';
 
 import 'entidades/usuario.dart';
 
@@ -28,6 +32,9 @@ class _CadastroPageState extends State<CadastroPage> {
   final usuario = Usuario();
   final endereco = Endereco();
 
+  String gravatar =
+      'https://www.gravatar.com/avatar/${md5.convert(utf8.encode('10000'))}?d=robohash';
+
   @override
   void dispose() {
     nomeController.dispose();
@@ -48,7 +55,7 @@ class _CadastroPageState extends State<CadastroPage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        backgroundColor: Color.fromRGBO(102, 102, 153, 1),
+        backgroundColor: Color.fromRGBO(244, 66, 53, 1),
         title: Text('Cadastro de Usuário'),
         actions: <Widget>[
           IconButton(
@@ -67,15 +74,23 @@ class _CadastroPageState extends State<CadastroPage> {
             key: _form,
             child: Column(
               children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(10),
+                  child: CircleAvatar(
+                    radius: 50.0,
+                    backgroundColor: Colors.blue,
+                    backgroundImage: NetworkImage(gravatar),
+                  ),
+                ),
                 TextFormField(
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     focusedBorder: OutlineInputBorder(
                       borderSide:
-                          BorderSide(color: Color.fromRGBO(102, 102, 153, 1)),
+                          BorderSide(color: Color.fromRGBO(244, 66, 53, 1)),
                     ),
                     labelStyle:
-                        TextStyle(color: Color.fromRGBO(102, 102, 153, 1)),
+                        TextStyle(color: Color.fromRGBO(244, 66, 53, 1)),
                     labelText: 'Nome completo',
                   ),
                   controller: nomeController,
@@ -94,16 +109,21 @@ class _CadastroPageState extends State<CadastroPage> {
                     border: OutlineInputBorder(),
                     focusedBorder: OutlineInputBorder(
                       borderSide:
-                          BorderSide(color: Color.fromRGBO(102, 102, 153, 1)),
+                          BorderSide(color: Color.fromRGBO(244, 66, 53, 1)),
                     ),
                     labelStyle:
-                        TextStyle(color: Color.fromRGBO(102, 102, 153, 1)),
+                        TextStyle(color: Color.fromRGBO(244, 66, 53, 1)),
                     labelText: 'Email',
                   ),
                   controller: emailController,
                   validator: (valor) {
-                    if (!EmailValidator.validate(valor))
+                    if (!EmailValidator.validate(valor)) {
                       return 'Email invalido';
+                    } else {
+                      gravatar =
+                          'https://www.gravatar.com/avatar/${md5.convert(utf8.encode('$valor'))}';
+                    }
+
                     return null;
                   },
                   onSaved: (valor) {
@@ -116,12 +136,17 @@ class _CadastroPageState extends State<CadastroPage> {
                     border: OutlineInputBorder(),
                     focusedBorder: OutlineInputBorder(
                       borderSide:
-                          BorderSide(color: Color.fromRGBO(102, 102, 153, 1)),
+                          BorderSide(color: Color.fromRGBO(244, 66, 53, 1)),
                     ),
                     labelStyle:
-                        TextStyle(color: Color.fromRGBO(102, 102, 153, 1)),
+                        TextStyle(color: Color.fromRGBO(244, 66, 53, 1)),
                     labelText: 'CPF',
                   ),
+                  inputFormatters: [
+                    CnpjCpfFormatter(
+                      eDocumentType: EDocumentType.CPF,
+                    )
+                  ],
                   keyboardType: TextInputType.number,
                   controller: cpfController,
                   validator: (valor) {
@@ -145,10 +170,10 @@ class _CadastroPageState extends State<CadastroPage> {
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color.fromRGBO(102, 102, 153, 1)),
+                                  color: Color.fromRGBO(244, 66, 53, 1)),
                             ),
                             labelStyle: TextStyle(
-                                color: Color.fromRGBO(102, 102, 153, 1)),
+                                color: Color.fromRGBO(244, 66, 53, 1)),
                             labelText: 'CEP',
                           ),
                           keyboardType: TextInputType.number,
@@ -175,8 +200,41 @@ class _CadastroPageState extends State<CadastroPage> {
                                 Text('Buscar Cep'),
                               ],
                             ),
-                            onPressed: () {
-                              Navigator.of(context).pop();
+                            onPressed: () async {
+                              try {
+                                if (cepController.text.length != 8) {
+                                  throw Error();
+                                } else {
+                                  Response<String> dados = await Dio().get(
+                                      'https://viacep.com.br/ws/${cepController.text}/json/');
+
+                                  Map<String, dynamic> procura =
+                                      jsonDecode(dados.toString());
+
+                                  ruaController.text = procura['logradouro'];
+                                  bairroController.text = procura['bairro'];
+                                  ufController.text = procura['uf'];
+                                  cidadeController.text = procura['localidade'];
+                                  paisController.text = 'Brasil';
+                                }
+                              } catch (e) {
+                                _scaffoldKey.currentState
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      duration: Duration(
+                                        seconds: 2,
+                                      ),
+                                      content: Text('CEP incorreto!'),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor:
+                                          Color.fromRGBO(244, 66, 53, 1),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                  );
+                              }
                             },
                           ),
                         ),
@@ -197,10 +255,10 @@ class _CadastroPageState extends State<CadastroPage> {
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color.fromRGBO(102, 102, 153, 1)),
+                                  color: Color.fromRGBO(244, 66, 53, 1)),
                             ),
                             labelStyle: TextStyle(
-                                color: Color.fromRGBO(102, 102, 153, 1)),
+                                color: Color.fromRGBO(244, 66, 53, 1)),
                             labelText: 'Rua',
                           ),
                           controller: ruaController,
@@ -222,10 +280,10 @@ class _CadastroPageState extends State<CadastroPage> {
                               border: OutlineInputBorder(),
                               focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color.fromRGBO(102, 102, 153, 1)),
+                                    color: Color.fromRGBO(244, 66, 53, 1)),
                               ),
                               labelStyle: TextStyle(
-                                  color: Color.fromRGBO(102, 102, 153, 1)),
+                                  color: Color.fromRGBO(244, 66, 53, 1)),
                               labelText: 'Numero',
                             ),
                             keyboardType: TextInputType.number,
@@ -256,10 +314,10 @@ class _CadastroPageState extends State<CadastroPage> {
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color.fromRGBO(102, 102, 153, 1)),
+                                  color: Color.fromRGBO(244, 66, 53, 1)),
                             ),
                             labelStyle: TextStyle(
-                                color: Color.fromRGBO(102, 102, 153, 1)),
+                                color: Color.fromRGBO(244, 66, 53, 1)),
                             labelText: 'Bairro',
                           ),
                           controller: bairroController,
@@ -281,10 +339,10 @@ class _CadastroPageState extends State<CadastroPage> {
                               border: OutlineInputBorder(),
                               focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color.fromRGBO(102, 102, 153, 1)),
+                                    color: Color.fromRGBO(244, 66, 53, 1)),
                               ),
                               labelStyle: TextStyle(
-                                  color: Color.fromRGBO(102, 102, 153, 1)),
+                                  color: Color.fromRGBO(244, 66, 53, 1)),
                               labelText: 'Cidade',
                             ),
                             controller: cidadeController,
@@ -315,10 +373,10 @@ class _CadastroPageState extends State<CadastroPage> {
                             border: OutlineInputBorder(),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                  color: Color.fromRGBO(102, 102, 153, 1)),
+                                  color: Color.fromRGBO(244, 66, 53, 1)),
                             ),
                             labelStyle: TextStyle(
-                                color: Color.fromRGBO(102, 102, 153, 1)),
+                                color: Color.fromRGBO(244, 66, 53, 1)),
                             labelText: 'UF',
                           ),
                           controller: ufController,
@@ -339,10 +397,10 @@ class _CadastroPageState extends State<CadastroPage> {
                               border: OutlineInputBorder(),
                               focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color.fromRGBO(102, 102, 153, 1)),
+                                    color: Color.fromRGBO(244, 66, 53, 1)),
                               ),
                               labelStyle: TextStyle(
-                                  color: Color.fromRGBO(102, 102, 153, 1)),
+                                  color: Color.fromRGBO(244, 66, 53, 1)),
                               labelText: 'País',
                             ),
                             controller: paisController,
@@ -362,66 +420,127 @@ class _CadastroPageState extends State<CadastroPage> {
                 ),
                 SizedBox(height: 15),
                 Container(
-                  width: double.maxFinite,
-                  child: TesteButtom(
-                    () {
-                      if (_form.currentState.validate()) {
-                        setState(() {
-                          _form.currentState.save();
-                        });
-                        _scaffoldKey.currentState
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(
-                              duration: Duration(
-                                seconds: 2,
-                              ),
-                              content: Text('Dados Salvos Com Sucesso!'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Color.fromRGBO(102, 102, 153, 1),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                          );
-                        showDialog(
-                          barrierDismissible: false,
-                          context: context,
-                          builder: (ctx) {
-                            return AlertDialog(
-                              title: Text(
-                                'Dados: ${usuario.nome}',
-                              ),
-                              content: Text(usuario.dados(endereco.dados())),
-                              actions: <Widget>[
-                                FlatButton(
-                                  child: Text('ok'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: CleanButtom(
+                          () {
+                            setState(() {
+                              nomeController.clear();
+                              emailController.clear();
+                              cpfController.clear();
+                              cepController.clear();
+                              ruaController.clear();
+                              numeroController.clear();
+                              bairroController.clear();
+                              cidadeController.clear();
+                              ufController.clear();
+                              paisController.clear();
+                            });
+                            _scaffoldKey.currentState
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                  duration: Duration(
+                                    seconds: 2,
+                                  ),
+                                  content: Text('Dados Limpos!'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor:
+                                      Color.fromRGBO(244, 66, 53, 1),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
                                 ),
-                              ],
-                            );
+                              );
                           },
-                        );
-                      } else {
-                        _scaffoldKey.currentState
-                          ..hideCurrentSnackBar()
-                          ..showSnackBar(
-                            SnackBar(
-                              duration: Duration(
-                                seconds: 2,
-                              ),
-                              content: Text('Dados incorretos!'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: Color.fromRGBO(102, 102, 153, 1),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                          );
-                      }
-                    },
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          padding: EdgeInsets.only(left: 10),
+                          child: SaveButton(
+                            () {
+                              if (_form.currentState.validate()) {
+                                setState(() {
+                                  _form.currentState.save();
+                                });
+                                _scaffoldKey.currentState
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      duration: Duration(
+                                        seconds: 2,
+                                      ),
+                                      content:
+                                          Text('Dados Salvos Com Sucesso!'),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor:
+                                          Color.fromRGBO(244, 66, 53, 1),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                  );
+                                showDialog(
+                                  barrierDismissible: false,
+                                  context: context,
+                                  builder: (ctx) {
+                                    return Column(
+                                      children: <Widget>[
+                                        AlertDialog(
+                                          title: Text(
+                                            'Dados: ${usuario.nome}',
+                                          ),
+                                          content: Column(
+                                            children: <Widget>[
+                                              CircleAvatar(
+                                                radius: 50.0,
+                                                backgroundColor: Colors.blue,
+                                                backgroundImage:
+                                                    NetworkImage(gravatar),
+                                              ),
+                                              Text(usuario
+                                                  .dados(endereco.dados())),
+                                            ],
+                                          ),
+                                          actions: <Widget>[
+                                            FlatButton(
+                                              child: Text('ok'),
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              } else {
+                                _scaffoldKey.currentState
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      duration: Duration(
+                                        seconds: 2,
+                                      ),
+                                      content: Text('Dados incorretos!'),
+                                      behavior: SnackBarBehavior.floating,
+                                      backgroundColor:
+                                          Color.fromRGBO(244, 66, 53, 1),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                    ),
+                                  );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -433,10 +552,10 @@ class _CadastroPageState extends State<CadastroPage> {
   }
 }
 
-class TesteButtom extends StatelessWidget {
+class SaveButton extends StatelessWidget {
   final void Function() onPressed;
 
-  TesteButtom(this.onPressed);
+  SaveButton(this.onPressed);
 
   @override
   Widget build(BuildContext context) {
@@ -453,9 +572,9 @@ class TesteButtom extends StatelessWidget {
         'Salvar',
         style: TextStyle(fontSize: 18),
       ),
-      textColor: Color.fromRGBO(102, 102, 153, 1),
+      textColor: Color.fromRGBO(244, 66, 53, 1),
       borderSide: BorderSide(
-        color: Color.fromRGBO(102, 102, 153, 1),
+        color: Color.fromRGBO(244, 66, 53, 1),
       ),
     );
   }
@@ -470,20 +589,15 @@ class CleanButtom extends StatelessWidget {
   Widget build(BuildContext context) {
     return OutlineButton(
       onPressed: () {
-        /* Scaffold.of(context).showSnackBar(
-          SnackBar(
-            content: Text('usuário salvo'),
-          ),
-        ); */
         onPressed();
       },
       child: Text(
         'Limpar',
         style: TextStyle(fontSize: 18),
       ),
-      textColor: Color.fromRGBO(102, 102, 153, 1),
+      textColor: Color.fromRGBO(244, 66, 53, 1),
       borderSide: BorderSide(
-        color: Color.fromRGBO(102, 102, 153, 1),
+        color: Color.fromRGBO(244, 66, 53, 1),
       ),
     );
   }

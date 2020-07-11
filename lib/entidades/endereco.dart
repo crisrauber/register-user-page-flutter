@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 class Endereco {
   int cep;
   String rua;
