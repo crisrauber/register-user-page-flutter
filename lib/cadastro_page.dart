@@ -404,6 +404,22 @@ class _CadastroPageState extends State<CadastroPage> {
                             );
                           },
                         );
+                      } else {
+                        _scaffoldKey.currentState
+                          ..hideCurrentSnackBar()
+                          ..showSnackBar(
+                            SnackBar(
+                              duration: Duration(
+                                seconds: 2,
+                              ),
+                              content: Text('Dados incorretos!'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Color.fromRGBO(102, 102, 153, 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                          );
                       }
                     },
                   ),
@@ -435,6 +451,34 @@ class TesteButtom extends StatelessWidget {
       },
       child: Text(
         'Salvar',
+        style: TextStyle(fontSize: 18),
+      ),
+      textColor: Color.fromRGBO(102, 102, 153, 1),
+      borderSide: BorderSide(
+        color: Color.fromRGBO(102, 102, 153, 1),
+      ),
+    );
+  }
+}
+
+class CleanButtom extends StatelessWidget {
+  final void Function() onPressed;
+
+  CleanButtom(this.onPressed);
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlineButton(
+      onPressed: () {
+        /* Scaffold.of(context).showSnackBar(
+          SnackBar(
+            content: Text('usuário salvo'),
+          ),
+        ); */
+        onPressed();
+      },
+      child: Text(
+        'Limpar',
         style: TextStyle(fontSize: 18),
       ),
       textColor: Color.fromRGBO(102, 102, 153, 1),
