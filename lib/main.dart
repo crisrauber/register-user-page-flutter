@@ -1,5 +1,4 @@
 import 'package:cadastro_usuario_growdev/cadastro_page.dart';
-import 'package:cadastro_usuario_growdev/dialog_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
