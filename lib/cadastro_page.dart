@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cadastro_usuario_growdev/entidades/endereco.dart';
 import 'package:dio/dio.dart';
 import 'package:email_validator/email_validator.dart';
@@ -33,7 +35,7 @@ class _CadastroPageState extends State<CadastroPage> {
   final endereco = Endereco();
 
   String gravatar =
-      'https://www.gravatar.com/avatar/${md5.convert(utf8.encode('10000'))}?d=robohash';
+      'https://www.gravatar.com/avatar/${md5.convert(utf8.encode('${Random.secure().nextInt(10000).toString()}'))}?d=robohash';
 
   @override
   void dispose() {
@@ -162,7 +164,7 @@ class _CadastroPageState extends State<CadastroPage> {
                 Container(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
                         child: TextFormField(
@@ -246,7 +248,7 @@ class _CadastroPageState extends State<CadastroPage> {
                 Container(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Expanded(
                         flex: 2,
@@ -507,7 +509,7 @@ class _CadastroPageState extends State<CadastroPage> {
                                           ),
                                           actions: <Widget>[
                                             FlatButton(
-                                              child: Text('ok'),
+                                              child: Text('Ok'),
                                               onPressed: () {
                                                 Navigator.of(context).pop();
                                               },
